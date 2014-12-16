@@ -16,15 +16,12 @@ import (
 	"net/http"
 )
 
-//var last_err error
 var last_err LastRun
 
 type LastRun struct {
 	Exit_status int
-	//stdout      bytes.Buffer
-	//stderr      bytes.Buffer
-	Stdout string
-	Stderr string
+	Stdout      string
+	Stderr      string
 }
 
 func execute(command string, args []string) {
@@ -32,8 +29,6 @@ func execute(command string, args []string) {
 	log.Println("executing:", command, strings.Join(args, " "))
 
 	cmd := exec.Command(command, args...)
-	//last_err.stdout.Reset()
-	//last_err.stderr.Reset()
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -44,22 +39,24 @@ func execute(command string, args []string) {
 	if err := cmd.Start(); err != nil {
 		log.Fatalf("cmd.Start: %v")
 	}
+
+	last_err.Exit_status = 0
+
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			// The program has exited with an exit code != 0
-
-			last_err.Exit_status = 0
 
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
 				last_err.Exit_status = status.ExitStatus()
 				log.Printf("Exit Status: %d", last_err.Exit_status)
 			}
-			last_err.Stderr = stderr.String()
-			last_err.Stdout = stdout.String()
 		} else {
 			log.Fatalf("cmd.Wait: %v", err)
 		}
 	}
+
+	last_err.Stderr = stderr.String()
+	last_err.Stdout = stdout.String()
 }
 
 func create() (cr *cron.Cron, wgr *sync.WaitGroup) {
