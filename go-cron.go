@@ -20,11 +20,11 @@ import (
 var last_err LastRun
 
 type LastRun struct {
-	exit_status int
+	Exit_status int
 	//stdout      bytes.Buffer
 	//stderr      bytes.Buffer
-	stdout string
-	stderr string
+	Stdout string
+	Stderr string
 }
 
 func execute(command string, args []string) {
@@ -48,14 +48,14 @@ func execute(command string, args []string) {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			// The program has exited with an exit code != 0
 
-			last_err.exit_status = 0
+			last_err.Exit_status = 0
 
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				last_err.exit_status = status.ExitStatus()
-				log.Printf("Exit Status: %d", last_err.exit_status)
+				last_err.Exit_status = status.ExitStatus()
+				log.Printf("Exit Status: %d", last_err.Exit_status)
 			}
-			last_err.stderr = stderr.String()
-			last_err.stdout = stdout.String()
+			last_err.Stderr = stderr.String()
+			last_err.Stdout = stdout.String()
 		} else {
 			log.Fatalf("cmd.Wait: %v", err)
 		}
@@ -82,13 +82,13 @@ func create() (cr *cron.Cron, wgr *sync.WaitGroup) {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	if last_err.exit_status != 0 {
-		b, _ := json.Marshal(last_err)
-		log.Println(string(b[:len(b)]))
-		http.Error(w, last_err.stderr, http.StatusInternalServerError)
+	b, _ := json.Marshal(last_err)
+	resp := string(b[:len(b)])
+	if last_err.Exit_status != 0 {
+		http.Error(w, resp, http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, last_err.stdout)
+	fmt.Fprintf(w, resp)
 }
 
 func http_server(c *cron.Cron, wg *sync.WaitGroup) {
