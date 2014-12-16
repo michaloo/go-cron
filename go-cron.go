@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 var last_err LastRun
@@ -22,6 +23,7 @@ type LastRun struct {
 	Exit_status int
 	Stdout      string
 	Stderr      string
+	Time        string
 }
 
 func execute(command string, args []string) {
@@ -54,7 +56,7 @@ func execute(command string, args []string) {
 			log.Fatalf("cmd.Wait: %v", err)
 		}
 	}
-
+	last_err.Time = time.Now().Format(time.RFC3339)
 	last_err.Stderr = stderr.String()
 	last_err.Stdout = stdout.String()
 }
@@ -79,6 +81,7 @@ func create() (cr *cron.Cron, wgr *sync.WaitGroup) {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	b, _ := json.Marshal(last_err)
 	resp := string(b[:len(b)])
 	if last_err.Exit_status != 0 {
