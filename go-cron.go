@@ -1,18 +1,17 @@
 package main
 
-import "os"
-import "os/exec"
-import "strings"
-import "sync"
-import "os/signal"
-import "syscall"
-import "github.com/robfig/cron"
-import "log"
-
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/robfig/cron"
+	"log"
 	"net/http"
+	"os"
+	"os/exec"
+	"os/signal"
+	"strings"
+	"sync"
+	"syscall"
 	"time"
 )
 
