@@ -121,7 +121,7 @@ func stop(c *cron.Cron, wg *sync.WaitGroup) {
 func main() {
 	log.Println("Running version: %s", build)
 
-	if len(os.Args) == 1 || len(os.Args) != 3 {
+	if len(os.Args) < 3 {
 		log.Fatalf("run: go-cron <schedule> <command>")
 	}
 
