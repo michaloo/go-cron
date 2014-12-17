@@ -15,6 +15,7 @@ import (
 	"time"
 )
 
+var build string
 var last_err LastRun
 
 type LastRun struct {
@@ -118,6 +119,11 @@ func stop(c *cron.Cron, wg *sync.WaitGroup) {
 }
 
 func main() {
+	log.Println("Running version: %s", build)
+
+	if len(os.Args) == 1 || len(os.Args) != 3 {
+		log.Fatalf("run: go-cron <schedule> <command>")
+	}
 
 	c, wg := create()
 
