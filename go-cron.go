@@ -12,7 +12,6 @@ import "log"
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -24,6 +23,7 @@ type LastRun struct {
 	Stdout      string
 	Stderr      string
 	Time        string
+	Schedule    string
 }
 
 func execute(command string, args []string) {
@@ -47,7 +47,8 @@ func execute(command string, args []string) {
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			// The program has exited with an exit code != 0
-
+			// so set the error code to tremporary value
+			last_err.Exit_status = 127
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
 				last_err.Exit_status = status.ExitStatus()
 				log.Printf("Exit Status: %d", last_err.Exit_status)
@@ -66,6 +67,8 @@ func create() (cr *cron.Cron, wgr *sync.WaitGroup) {
 	var command string = os.Args[2]
 	var args []string = os.Args[3:len(os.Args)]
 
+	last_err.Schedule = schedule
+
 	wg := &sync.WaitGroup{}
 
 	c := cron.New()
@@ -82,13 +85,16 @@ func create() (cr *cron.Cron, wgr *sync.WaitGroup) {
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	b, _ := json.Marshal(last_err)
-	resp := string(b[:len(b)])
-	if last_err.Exit_status != 0 {
-		http.Error(w, resp, http.StatusInternalServerError)
+	js, err := json.Marshal(last_err)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, resp)
+
+	if last_err.Exit_status != 0 {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}
+	w.Write(js)
 }
 
 func http_server(c *cron.Cron, wg *sync.WaitGroup) {
