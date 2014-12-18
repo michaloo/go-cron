@@ -34,8 +34,6 @@ var Current_state CurrentState
 
 func execute(command string, args []string) {
 
-	log.Println("executing:", command, strings.Join(args, " "))
-
 	cmd := exec.Command(command, args...)
 
 	var stdout bytes.Buffer
@@ -52,6 +50,8 @@ func execute(command string, args []string) {
 	}
 	run.Pid = cmd.Process.Pid
 
+	log.Println(run.Pid, "cmd:", command, strings.Join(args, " "))
+
 	Current_state.Running[strconv.Itoa(run.Pid)] = run
 
 	if err := cmd.Wait(); err != nil {
@@ -61,12 +61,16 @@ func execute(command string, args []string) {
 			run.Exit_status = 127
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
 				run.Exit_status = status.ExitStatus()
-				log.Printf("PID %d Exit Status: %d", run.Pid, run.Exit_status)
+				log.Printf("%d Exit Status: %d", run.Pid, run.Exit_status)
 			}
 		} else {
 			log.Fatalf("cmd.Wait: %v", err)
 		}
 	}
+
+	log.Printf("%d stdout: %v", run.Pid, stdout.String())
+	log.Printf("%d stderr: %v", run.Pid, stderr.String())
+
 	run.ExitTime = time.Now().Format(time.RFC3339)
 	run.Stderr = stderr.String()
 	run.Stdout = stdout.String()

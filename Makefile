@@ -1,7 +1,7 @@
 TOKEN = `cat .token`
 REPO := go-cron
 USER := odise
-VERSION := "v0.0.1"
+VERSION := "v0.0.4"
 
 build:
 	mkdir -p out/darwin out/linux
