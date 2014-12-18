@@ -12,7 +12,7 @@ import (
 var build string
 
 func main() {
-	log.Println("Running version: %s", build)
+	log.Println("Running version:", build)
 
 	if len(os.Args) < 3 {
 		log.Fatalf("run: go-cron <schedule> <command>")

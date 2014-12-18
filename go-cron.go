@@ -66,15 +66,14 @@ func execute(command string, args []string) {
 		} else {
 			log.Fatalf("cmd.Wait: %v", err)
 		}
-	} else {
-		run.ExitTime = time.Now().Format(time.RFC3339)
-		run.Stderr = stderr.String()
-		run.Stdout = stdout.String()
-
-		delete(Current_state.Running, strconv.Itoa(run.Pid))
-		run.Pid = 0
-		Current_state.Last = run
 	}
+	run.ExitTime = time.Now().Format(time.RFC3339)
+	run.Stderr = stderr.String()
+	run.Stdout = stdout.String()
+
+	delete(Current_state.Running, strconv.Itoa(run.Pid))
+	run.Pid = 0
+	Current_state.Last = run
 }
 
 func Create() (cr *cron.Cron, wgr *sync.WaitGroup) {
