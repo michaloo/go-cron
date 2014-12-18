@@ -15,7 +15,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if Last_err.Exit_status != 0 {
+	if Current_state.Last.Exit_status != 0 {
 		w.WriteHeader(http.StatusServiceUnavailable)
 	}
 

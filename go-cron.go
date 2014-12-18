@@ -24,13 +24,12 @@ type LastRun struct {
 }
 
 type CurrentState struct {
-	Running  *map[string]LastRun
-	Last     *LastRun
+	Running  map[string]LastRun
+	Last     LastRun
 	Schedule string
 }
 
-var Last_err LastRun
-var Running_processes = map[string]LastRun{}
+var running_processes = map[string]LastRun{}
 var Current_state CurrentState
 
 func execute(command string, args []string) {
@@ -53,7 +52,7 @@ func execute(command string, args []string) {
 	}
 	run.Pid = cmd.Process.Pid
 
-	Running_processes[strconv.Itoa(run.Pid)] = run
+	Current_state.Running[strconv.Itoa(run.Pid)] = run
 
 	if err := cmd.Wait(); err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
@@ -62,7 +61,7 @@ func execute(command string, args []string) {
 			run.Exit_status = 127
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
 				run.Exit_status = status.ExitStatus()
-				log.Printf("Exit Status: %d", Last_err.Exit_status)
+				log.Printf("PID %d Exit Status: %d", run.Pid, run.Exit_status)
 			}
 		} else {
 			log.Fatalf("cmd.Wait: %v", err)
@@ -72,9 +71,9 @@ func execute(command string, args []string) {
 		run.Stderr = stderr.String()
 		run.Stdout = stdout.String()
 
-		delete(Running_processes, strconv.Itoa(run.Pid))
+		delete(Current_state.Running, strconv.Itoa(run.Pid))
 		run.Pid = 0
-		Last_err = run
+		Current_state.Last = run
 	}
 }
 
@@ -86,7 +85,7 @@ func Create() (cr *cron.Cron, wgr *sync.WaitGroup) {
 	wg := &sync.WaitGroup{}
 
 	c := cron.New()
-	Current_state = CurrentState{&Running_processes, &Last_err, schedule}
+	Current_state = CurrentState{map[string]LastRun{}, LastRun{}, schedule}
 	log.Println("new cron:", schedule)
 
 	c.AddFunc(schedule, func() {
